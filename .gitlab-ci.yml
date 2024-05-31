@@ -1,0 +1,39 @@
+stages:
+  - build
+  - deploy
+
+variables:
+  MAVEN_OPTS: "-Dmaven.repo.local=$CI_PROJECT_DIR/.m2/repository"
+
+before_script:
+  - apt-get update
+  - apt-get install -y maven
+  - apt-get install -y openssh-client
+
+build-job:
+  stage: build
+  script:
+    - echo "Building the application..."
+    - mvn clean package -DskipTests
+  artifacts:
+    paths:
+      - target/*.jar
+
+
+deploy-job:
+  image: ubuntu:latest
+  stage: deploy
+  only:
+    - develop
+  before_script:
+    - apt-get -yq update
+    - apt-get -yqq install ssh
+    - echo "$SSH_PRIVATE_KEY" > ~/.ssh/id_rsa
+    - chmod 600 ~/.ssh/id_rsa
+    - ssh-keyscan -H $SSH_HOST >> ~/.ssh/known_hosts
+  script:
+    - echo "Deploying application..."
+    - sleep 10
+    - ssh -i /root/.ssh/id_rsa $SSH_USER@$SSH_HOST "cd $WORK_DIR && git checkout $MAIN_BRANCH && git pull && docker stop car-rental-dev || true && docker rm car-rental-dev || true && docker build -t car-rental-dev . && docker run -d --name car-rental-dev -p 8081:8081 car-rental-dev && exit"
+  after_script:
+    - rm -rf ~/.ssh

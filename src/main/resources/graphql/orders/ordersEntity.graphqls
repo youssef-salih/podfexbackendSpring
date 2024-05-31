@@ -1,0 +1,12 @@
+type Orders {
+    id: ID
+    amount: Float
+    user: Users
+    products: [Product]
+}
+type PageOrders {
+    content:[Orders]
+    totalPages:Int
+    totalElements:Int
+    numberOfElements: Int
+}

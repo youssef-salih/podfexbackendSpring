@@ -1,0 +1,6 @@
+type Transactions{
+    id:ID
+    amount:Float
+    user:Users
+    order:Orders
+}

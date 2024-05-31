@@ -1,0 +1,13 @@
+type Product{
+    id:ID
+    name:String
+    price:Float
+    surface:Surface
+}
+
+type PageProduct {
+    content:[Product]
+    totalPages:Int
+    totalElements:Int
+    numberOfElements: Int
+}

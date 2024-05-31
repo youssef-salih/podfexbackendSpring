@@ -1,0 +1,5 @@
+type Surface{
+    id:ID
+    front:String
+    back:String
+}

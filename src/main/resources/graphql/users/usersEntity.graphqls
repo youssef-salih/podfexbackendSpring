@@ -1,0 +1,27 @@
+type Users {
+    id: ID
+    firstName: String
+    lastName: String
+    email: String
+    password: String
+    picture: String
+    CIN: String
+    phoneNumber: String
+    role: Role
+    createdAt: String
+    modifiedAt: String
+    deletedAt: String
+    deletedBy: String
+    authorities:[Authorities]
+}
+
+type Authorities {
+    authority:String
+}
+
+type Page {
+    content:[Users]
+    totalPages:Int
+    totalElements:Int
+    numberOfElements: Int
+}

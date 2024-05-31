@@ -1,0 +1,6 @@
+type Panier{
+    id:ID
+    Quantity:Int
+    user:Users
+    product:Product
+}
