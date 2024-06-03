@@ -1,0 +1,5 @@
+enum StatusUser {
+    INQUEUE
+    INPROGRESS
+    COMPLETED
+}

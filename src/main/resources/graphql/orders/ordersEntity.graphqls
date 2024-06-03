@@ -1,12 +1,26 @@
 type Orders {
     id: ID
-    amount: Float
-    user: Users
-    products: [Product]
+    price: Float
+    preview:String
+    orderNo:String
+    statusUser:StatusUser
+    statusAdmin:StatusAdmin
+    quantity:Int
+    type:String
+    personnel:Users
+    product:Product
+    client:Client
+    images:[String]
+    order:Orders
 }
 type PageOrders {
     content:[Orders]
     totalPages:Int
     totalElements:Int
     numberOfElements: Int
+}
+type OrderListResponse {
+    success: Boolean!
+    list: [Orders]
+    message: String
 }

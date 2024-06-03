@@ -1,0 +1,5 @@
+type OneResponseOrders {
+    success: Boolean!
+    content: Orders
+    message: String!
+}

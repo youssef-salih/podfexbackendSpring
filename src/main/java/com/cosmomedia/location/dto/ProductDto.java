@@ -1,18 +1,21 @@
 package com.cosmomedia.location.dto;
 
-import lombok.Value;
+import lombok.*;
 
 import java.io.Serializable;
-import java.util.List;
 
 /**
  * DTO for {@link com.cosmomedia.location.entities.Product}
  */
-@Value
-public class ProductDto implements Serializable {
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
+public class ProductDto {
     Long id;
     String name;
     Double price;
+    String image;
     SurfaceDto surface;
-    List<OrdersDto> orders;
 }

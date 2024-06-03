@@ -1,0 +1,19 @@
+input OrderInput {
+    preview: String
+    orderNo: String
+    price: Float
+    statusUser: StatusUser
+    statusAdmin: StatusAdmin
+    quantity: Int
+    type: String
+    personnelId: Int
+    productId: Int
+    clientId: Int
+    images: [String]
+}
+
+type OrderResponse {
+    success: Boolean
+    message: String
+    content: Orders
+}

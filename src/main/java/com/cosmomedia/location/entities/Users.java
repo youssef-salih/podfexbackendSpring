@@ -48,6 +48,10 @@ public class Users implements UserDetails {
     @OneToOne(mappedBy = "users")
     private Balance balance;
 
+    public Users(Long personnelId) {
+        this.id = personnelId;
+    }
+
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
         return List.of(new SimpleGrantedAuthority(role.name()));

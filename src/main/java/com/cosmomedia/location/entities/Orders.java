@@ -1,5 +1,7 @@
 package com.cosmomedia.location.entities;
 
+import com.cosmomedia.location.enums.StatusAdmin;
+import com.cosmomedia.location.enums.StatusUser;
 import jakarta.persistence.*;
 import lombok.*;
 import org.springframework.context.annotation.Lazy;
@@ -16,32 +18,32 @@ import java.util.List;
 @Entity
 public class Orders {
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    private Double amount;
-    private byte[] previewFront;
-    private byte[] previewBack;
-
-    @ElementCollection
-    @CollectionTable(name = "images_front", joinColumns = @JoinColumn())
-    @Column(name = "file_data", columnDefinition = "bytea")
-    private List<byte[]> front;
-
-    @ElementCollection
-    @CollectionTable(name = "images_back", joinColumns = @JoinColumn())
-    @Column(name = "file_data", columnDefinition = "bytea")
-    private List<byte[]> back;
+    private byte[] preview;
+    private String orderNo;
+    private Double price;
+    private StatusUser statusUser;
+    private StatusAdmin statusAdmin;
+    private Integer quantity;
+    private String type;
 
     @ManyToOne
-    @JoinColumn(name = "user_id")
-    private Users user;
+    private Users personnel;
+
+    @ManyToOne
+    private Product product;
+
+    @OneToOne(fetch = FetchType.EAGER)
+    private Orders order;
+
+    @ManyToOne
+    private Client client;
+
+    @ElementCollection(fetch = FetchType.EAGER)
+    @CollectionTable(name = "images", joinColumns = @JoinColumn())
+    @Column(name = "file_data", columnDefinition = "bytea")
+    private List<byte[]> images;
 
 
-    @ManyToMany(fetch = FetchType.EAGER)
-    @JoinTable(
-            name = "order_product",
-            joinColumns = @JoinColumn(name = "order_id"),
-            inverseJoinColumns = @JoinColumn(name = "product_id"))
-    @ToString.Exclude
-    private List<Product> products;
 }

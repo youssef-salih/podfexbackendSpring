@@ -1,4 +1,22 @@
 type Query{
     allProduct(page: Int = 1, size: Int = 10): PageProduct
     getOrdersList(page: Int = 1, size: Int = 10):PageOrders
+    getOneOrder(orderNo: String!): OneResponseOrders
+    getOrdersByType(type:String):OrderListResponse
+}
+type Mutation {
+    updateOrderPersonnel(orderId: Int!, personnelId: Int!): Message
+    addOrder(
+        orderNo: String,
+        price: Float,
+        type: String,
+        productId: Int,
+        preview:String,
+        images:[String],
+    ): Message
+}
+
+type Message {
+    success: Boolean!
+    message: String
 }

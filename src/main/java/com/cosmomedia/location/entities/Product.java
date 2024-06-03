@@ -17,17 +17,16 @@ import java.util.List;
 @Entity
 public class Product {
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     private String name;
     private Double price;
-
+    private byte[] image;
     @OneToOne(cascade = CascadeType.ALL)
     @JoinColumn(name = "surface_id", referencedColumnName = "id")
     private Surface surface;
 
-    @ManyToMany(mappedBy = "products")
-    @ToString.Exclude
-    private List<Orders> orders;
-
+    public Product(Long productId) {
+        this.id=productId;
+    }
 }

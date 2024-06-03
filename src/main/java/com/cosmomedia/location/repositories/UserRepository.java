@@ -16,4 +16,8 @@ public interface UserRepository extends JpaRepository<Users, Long> {
 
     Page<Users> findByDeletedAtNotNullOrderByDeletedAtDesc(Pageable pageable);
     Page<Users> findAll(Specification<Users> specification, Pageable pageable);
+
+
+    @Override
+    Optional<Users> findById(Long aLong);
 }
