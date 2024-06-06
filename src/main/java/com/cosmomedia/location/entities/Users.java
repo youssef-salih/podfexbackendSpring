@@ -19,11 +19,10 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-@ToString
 @Entity
 public class Users implements UserDetails {
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     @Column(unique = true)
     private String email;
@@ -47,6 +46,23 @@ public class Users implements UserDetails {
     private Roles role;
     @OneToOne(mappedBy = "users")
     private Balance balance;
+    @Override
+    public String toString() {
+        return "Users{" +
+                "id=" + id +
+                ", email='" + email + '\'' +
+                ", firstName='" + firstName + '\'' +
+                ", lastName='" + lastName + '\'' +
+                ", createdAt=" + createdAt +
+                ", updatedAt=" + updatedAt +
+                ", modifiedAt=" + modifiedAt +
+                ", deletedAt=" + deletedAt +
+                ", deletedBy='" + deletedBy + '\'' +
+                ", status=" + status +
+                ", role=" + role +
+                ", balanceAmount=" + (balance != null ? balance.getAmount() : "null") +
+                '}';
+    }
 
     public Users(Long personnelId) {
         this.id = personnelId;

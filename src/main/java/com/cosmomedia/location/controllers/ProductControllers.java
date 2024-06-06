@@ -1,5 +1,8 @@
 package com.cosmomedia.location.controllers;
 
+import com.cosmomedia.location.dto.OneResponse;
+import com.cosmomedia.location.dto.OrdersDto;
+import com.cosmomedia.location.dto.ProductDto;
 import com.cosmomedia.location.dto.UsersDto;
 import com.cosmomedia.location.entities.Product;
 import com.cosmomedia.location.service.product.ProductCRUD;
@@ -16,8 +19,12 @@ import org.springframework.stereotype.Controller;
 public class ProductControllers {
     private final ProductCRUD productCRUD;
     @QueryMapping
-    public Page<Product> allProduct(@Argument(name = "page") int page, @Argument(name = "size") int size) {
+    public Page<ProductDto> allProduct(@Argument(name = "page") int page, @Argument(name = "size") int size) {
         Pageable pageable = PageRequest.of(page - 1, size);
         return productCRUD.getProductList(pageable);
+    }
+    @QueryMapping
+    public OneResponse<ProductDto> getOneProduct(@Argument(name = "name") String name) {
+        return productCRUD.getOneProduct(name);
     }
 }

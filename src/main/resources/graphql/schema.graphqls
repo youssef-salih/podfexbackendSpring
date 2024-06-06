@@ -3,9 +3,11 @@ type Query{
     getOrdersList(page: Int = 1, size: Int = 10):PageOrders
     getOneOrder(orderNo: String!): OneResponseOrders
     getOrdersByType(type:String):OrderListResponse
+    getOneProduct(name: String!): OneResponseProduct
+    statusAdmin:[StatusAdmin]
+    statusUser:[StatusUser]
 }
 type Mutation {
-    updateOrderPersonnel(orderId: Int!, personnelId: Int!): Message
     addOrder(
         orderNo: String,
         price: Float,
@@ -14,6 +16,10 @@ type Mutation {
         preview:String,
         images:[String],
     ): Message
+    linkOrders(orderNo :String,orderNo2:String):Message
+    unlinkOrders(orderNo :String,orderNo2:String):Message
+    updateOrderPersonnel(orderNo:String,personnelId:Int):Message
+    confirmOrder(orderNo:String,quantity:Int,client:ClientInput):Message
 }
 
 type Message {

@@ -55,6 +55,7 @@ public class Converters {
         ordersDto.setStatusUser(order.getStatusUser());
         ordersDto.setStatusAdmin(order.getStatusAdmin());
         ordersDto.setQuantity(order.getQuantity());
+        ordersDto.setConfirmed(order.getConfirmed());
         ordersDto.setType(order.getType());
         ordersDto.setClient(order.getClient());
 
@@ -105,23 +106,18 @@ public class Converters {
         order.setQuantity(ordersDto.getQuantity());
         order.setType(ordersDto.getType());
         order.setClient(ordersDto.getClient());
-
-        // Convert back to Orders for the order field
         order.setOrder(convertToOrders(ordersDto.getOrder()));
 
-        // Convert UsersDto to Users for personnel
         if (ordersDto.getPersonnel() != null) {
             Users personnel = convertToUsers(ordersDto.getPersonnel());
             order.setPersonnel(personnel);
         }
 
-        // Convert ProductDto to Product
         if (ordersDto.getProduct() != null) {
             Product product = convertToProduct(ordersDto.getProduct());
             order.setProduct(product);
         }
 
-        // Convert list of image strings to byte arrays
         if (ordersDto.getImages() != null) {
             List<byte[]> imageBytes = new ArrayList<>();
             for (String imageString : ordersDto.getImages()) {

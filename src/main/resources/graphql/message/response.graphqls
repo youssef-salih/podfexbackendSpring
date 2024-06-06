@@ -3,3 +3,8 @@ type OneResponseOrders {
     content: Orders
     message: String!
 }
+type OneResponseProduct {
+    success: Boolean!
+    content: Product
+    message: String!
+}

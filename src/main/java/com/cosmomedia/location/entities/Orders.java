@@ -27,9 +27,12 @@ public class Orders {
     private StatusAdmin statusAdmin;
     private Integer quantity;
     private String type;
-
+    private Boolean confirmed;
     @ManyToOne
     private Users personnel;
+
+    @ManyToOne
+    private Users seller;
 
     @ManyToOne
     private Product product;

@@ -3,3 +3,4 @@ type Balance{
     amount:Float
     user:Users
 }
+

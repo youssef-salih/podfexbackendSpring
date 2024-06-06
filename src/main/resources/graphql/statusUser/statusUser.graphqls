@@ -2,4 +2,5 @@ enum StatusUser {
     INQUEUE
     INPROGRESS
     COMPLETED
+    RETURNED
 }

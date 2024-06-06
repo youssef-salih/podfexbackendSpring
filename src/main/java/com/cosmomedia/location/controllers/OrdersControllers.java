@@ -69,4 +69,41 @@ public class OrdersControllers {
 
         return orderCrud.addOrder(order);
     }
+
+    @MutationMapping
+    public Message linkOrders(
+            @Argument(name = "orderNo") String orderNo,
+            @Argument(name = "orderNo2") String orderNo2
+    ) {
+        return orderCrud.linkOrders(orderNo, orderNo2);
+    }
+
+    ;
+
+    @MutationMapping
+    public Message unlinkOrders(
+            @Argument(name = "orderNo") String orderNo,
+            @Argument(name = "orderNo2") String orderNo2
+    ) {
+        return orderCrud.unlinkOrders(orderNo, orderNo2);
+    }
+
+    ;
+
+    @MutationMapping
+    public Message updateOrderPersonnel(
+            @Argument(name = "orderNo") String orderNo,
+            @Argument(name = "personnelId") Long personnelId
+    ) {
+        return orderCrud.updateOrderPersonnel(orderNo, personnelId);
+    }
+
+    @MutationMapping
+    public Message confirmOrder(
+            @Argument(name = "orderNo") String orderNo,
+            @Argument(name = "quantity") Integer quantity,
+            @Argument(name = "client") Client client
+    ) {
+        return orderCrud.confirmOrder(orderNo, quantity, client);
+    }
 }

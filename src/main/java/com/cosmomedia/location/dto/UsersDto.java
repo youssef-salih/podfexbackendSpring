@@ -1,5 +1,6 @@
 package com.cosmomedia.location.dto;
 
+import com.cosmomedia.location.entities.Balance;
 import com.cosmomedia.location.enums.Roles;
 import com.cosmomedia.location.enums.Status;
 import lombok.*;
@@ -24,5 +25,6 @@ public class UsersDto {
     private Date modifiedAt;
     private Date deletedAt;
     private String deletedBy;
+    private Balance balance;
 
 }

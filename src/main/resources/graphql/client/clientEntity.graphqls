@@ -4,3 +4,10 @@ type Client {
     email:String
     adresse:String
 }
+
+input  ClientInput{
+    phone:String
+    name:String
+    email:String
+    adresse:String
+}

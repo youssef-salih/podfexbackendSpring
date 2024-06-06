@@ -12,6 +12,7 @@ type Orders {
     client:Client
     images:[String]
     order:Orders
+    confirmed:Boolean
 }
 type PageOrders {
     content:[Orders]

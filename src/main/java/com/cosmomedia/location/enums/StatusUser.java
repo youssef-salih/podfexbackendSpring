@@ -3,6 +3,6 @@ package com.cosmomedia.location.enums;
 public enum StatusUser {
     INQUEUE,
     INPROGRESS,
-    COMPLETED
-
+    COMPLETED,
+    RETURNED
 }

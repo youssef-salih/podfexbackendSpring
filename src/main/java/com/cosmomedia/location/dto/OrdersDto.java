@@ -26,6 +26,7 @@ public class OrdersDto{
     StatusAdmin statusAdmin;
     Integer quantity;
     String type;
+    Boolean confirmed;
     UsersDto personnel;
     ProductDto product;
     Client client;
