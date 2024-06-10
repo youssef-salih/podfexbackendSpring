@@ -13,11 +13,12 @@ import java.util.Optional;
 
 public interface OrderCrud {
     Page<OrdersDto> getOrdersList(Pageable pageable);
+    Page<OrdersDto> getUsersOrdersList(Pageable pageable);
 
 
     OneResponse<OrdersDto> getOneOrder(String orderNo);
 
-    List<OrdersDto> getOrdersByType(String type);
+    List<OrdersDto> getOrdersByType(String type,Long productId);
 
     Message addOrder(Orders order);
 

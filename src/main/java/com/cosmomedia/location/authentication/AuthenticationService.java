@@ -2,8 +2,10 @@ package com.cosmomedia.location.authentication;
 
 import com.cosmomedia.location.config.JwtService;
 import com.cosmomedia.location.dto.UsersDto;
+import com.cosmomedia.location.entities.Balance;
 import com.cosmomedia.location.entities.Users;
 import com.cosmomedia.location.enums.Roles;
+import com.cosmomedia.location.repositories.BalanceRepository;
 import com.cosmomedia.location.repositories.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -22,6 +24,8 @@ public class AuthenticationService {
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
     private final AuthenticationManager authenticationManager;
+    private final BalanceRepository balanceRepository;
+
     public AuthenticationResponse register(RegisterRequest request) {
 
         var user = Users.builder()
@@ -34,6 +38,12 @@ public class AuthenticationService {
 //                .picture(request.getPicture())
                 .build();
         repository.save(user);
+        Balance initialBalance = Balance.builder()
+                .amount(0.0)
+                .users(user)
+                .build();
+        balanceRepository.save(initialBalance);
+
         var jwtToken = jwtService.generateToken(user);
         return AuthenticationResponse.builder()
                 .token(jwtToken)

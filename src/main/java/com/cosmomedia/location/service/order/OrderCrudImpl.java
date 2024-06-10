@@ -2,21 +2,20 @@ package com.cosmomedia.location.service.order;
 
 import com.cosmomedia.location.dto.OneResponse;
 import com.cosmomedia.location.dto.OrdersDto;
-import com.cosmomedia.location.entities.Client;
-import com.cosmomedia.location.entities.Message;
-import com.cosmomedia.location.entities.Orders;
-import com.cosmomedia.location.entities.Users;
+import com.cosmomedia.location.entities.*;
 import com.cosmomedia.location.enums.StatusAdmin;
+import com.cosmomedia.location.enums.StatusTransaction;
 import com.cosmomedia.location.enums.StatusUser;
-import com.cosmomedia.location.repositories.ClientRepository;
-import com.cosmomedia.location.repositories.OrdersRepository;
-import com.cosmomedia.location.repositories.UserRepository;
+import com.cosmomedia.location.repositories.*;
+import com.cosmomedia.location.service.balence.BalanceService;
 import com.cosmomedia.location.service.converters.Converters;
+import com.cosmomedia.location.util.AuthenticationUtils;
 import com.cosmomedia.location.util.UniqueIdentifierUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
@@ -30,6 +29,9 @@ public class OrderCrudImpl implements OrderCrud {
     private final Converters converters;
     private final UserRepository usersRepository;
     private final ClientRepository clientRepository;
+    private final BalanceService balanceService;
+    private final BalanceRepository balanceRepository;
+    private final TransactionsRepository transactionsRepository;
 
     @Override
     public Page<OrdersDto> getOrdersList(Pageable pageable) {
@@ -70,6 +72,62 @@ public class OrderCrudImpl implements OrderCrud {
         );
     }
 
+    @Override
+    public Page<OrdersDto> getUsersOrdersList(Pageable pageable) {
+        String userEmail = AuthenticationUtils.getUserEmailFromAuthentication();
+        Optional<Users> userOptional = usersRepository.findByEmail(userEmail);
+
+        if (!userOptional.isPresent()) {
+            return Page.empty(pageable);
+        }
+
+        Users currentUser = userOptional.get();
+
+        Set<Long> seen = new HashSet<>();
+        List<Orders> validOrders = new ArrayList<>();
+
+        Page<Orders> ordersPage;
+        int page = 0;
+
+        do {
+            ordersPage = ordersRepository.findBySeller(currentUser, pageable);
+            for (Orders order : ordersPage.getContent()) {
+                if (order.getOrder() == null) {
+                    validOrders.add(order);
+                    continue;
+                }
+
+                Long currentId = order.getId();
+                Long referredId = order.getOrder().getId();
+
+                if (seen.contains(referredId)) {
+                    continue; // Skip this order if the referred one is already seen
+                }
+
+                seen.add(currentId);
+                seen.add(referredId);
+                validOrders.add(order);
+            }
+            page++;
+        } while (ordersPage.hasNext() && page < pageable.getPageNumber());
+
+        return new PageImpl<>(
+                validOrders.stream()
+                        .map(converters::convertToOrdersDto)
+                        .toList(),
+                pageable,
+                ordersPage.getTotalElements()
+        );
+    }
+
+    private String getUserEmailFromAuthentication() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication != null && authentication.getPrincipal() instanceof Users currentUser) {
+            System.out.println(currentUser.getEmail());
+            return currentUser.getEmail();
+        }
+        return null;
+    }
 
     @Override
     public OneResponse<OrdersDto> getOneOrder(String orderNo) {
@@ -92,11 +150,9 @@ public class OrderCrudImpl implements OrderCrud {
     }
 
     @Override
-    public List<OrdersDto> getOrdersByType(String type) {
-        List<Orders> orders = ordersRepository.findByTypeNotLike(type);
-
+    public List<OrdersDto> getOrdersByType(String type, Long productId) {
+        List<Orders> orders = ordersRepository.findByOrderNullAndConfirmedFalseAndTypeNotLikeAndProduct_Id(type, productId);
         return orders.stream()
-                .filter(order -> order.getOrder() == null) // Add this line
                 .map(converters::convertToOrdersDto)
                 .collect(Collectors.toList());
     }
@@ -108,6 +164,20 @@ public class OrderCrudImpl implements OrderCrud {
         if (order.getPreview() != null) {
             previewBytes = Base64.getDecoder().decode(order.getPreview());
         }
+
+        // Retrieve the seller (user) using the email from the authentication token
+        String userEmail = AuthenticationUtils.getUserEmailFromAuthentication();
+        Optional<Users> sellerOptional = usersRepository.findByEmail(userEmail);
+
+        if (!sellerOptional.isPresent()) {
+            return Message.builder()
+                    .success(false)
+                    .message("Seller not found")
+                    .build();
+        }
+
+        Users seller = sellerOptional.get();
+
         Orders ordersInsert = Orders.builder()
                 .orderNo(orderNumber)
                 .price(order.getPrice())
@@ -124,6 +194,7 @@ public class OrderCrudImpl implements OrderCrud {
                 .images(order.getImages() != null ? order.getImages().stream()
                         .map(Base64.getDecoder()::decode)
                         .collect(Collectors.toList()) : null)
+                .seller(seller) // Set the seller
                 .build();
 
         ordersRepository.save(ordersInsert);
@@ -220,34 +291,56 @@ public class OrderCrudImpl implements OrderCrud {
     @Override
     public Message confirmOrder(String orderNo, Integer quantity, Client client) {
         Optional<Orders> orderOptional = ordersRepository.findByOrderNo(orderNo);
-
+        String transactionNumber = UniqueIdentifierUtil.generateUniqueIdentifier("Tran-");
         if (orderOptional.isPresent()) {
             Orders orderToConfirm = orderOptional.get();
+            Balance balance = balanceService.balanceUser();
             Double newPrice = orderToConfirm.getPrice() * quantity;
-            // Ensure the client is saved
-            if (client.getId() == null) {
-                client = clientRepository.save(client);
+            if (balance.getAmount() >= newPrice) {
+                // Ensure the client is saved
+                if (client.getId() == null) {
+                    client = clientRepository.save(client);
+                }
+                orderToConfirm.setClient(client);
+                orderToConfirm.setQuantity(quantity);
+                orderToConfirm.setPrice(newPrice);
+                orderToConfirm.setConfirmed(true);
+
+                ordersRepository.save(orderToConfirm);
+
+                balance.setAmount(balance.getAmount() - newPrice);
+                balanceRepository.save(balance);
+
+                Optional<Users> users = usersRepository.findByEmail(getUserEmailFromAuthentication());
+                Transactions transactions = Transactions.builder()
+                        .amount(newPrice)
+                        .transactionNo(transactionNumber)
+                        .status(StatusTransaction.BUYING)
+                        .confirmed(true)
+                        .createdAt(new Date())
+                        .order(orderToConfirm)
+                        .user(users.get())
+                        .build();
+                transactionsRepository.save(transactions);
+
+                // Check if there's an associated order and update its client and price
+                if (orderToConfirm.getOrder() != null) {
+                    Orders associatedOrder = orderToConfirm.getOrder();
+                    associatedOrder.setClient(client);
+                    associatedOrder.setQuantity(quantity);
+                    associatedOrder.setPrice(newPrice);
+                    associatedOrder.setConfirmed(true);
+                    ordersRepository.save(associatedOrder);
+                }
+
+                return Message.builder()
+                        .success(true)
+                        .message("Order Confirmed")
+                        .build();
             }
-            orderToConfirm.setClient(client);
-            orderToConfirm.setQuantity(quantity);
-            orderToConfirm.setPrice(newPrice);
-            orderToConfirm.setConfirmed(true);
-
-            ordersRepository.save(orderToConfirm);
-
-            // Check if there's an associated order and update its client and price
-            if (orderToConfirm.getOrder() != null) {
-                Orders associatedOrder = orderToConfirm.getOrder();
-                associatedOrder.setClient(client);
-                associatedOrder.setQuantity(quantity);
-                associatedOrder.setPrice(newPrice);
-                associatedOrder.setConfirmed(true);
-                ordersRepository.save(associatedOrder);
-            }
-
             return Message.builder()
-                    .success(true)
-                    .message("Order Confirmed")
+                    .success(false)
+                    .message("Balance Insufisant")
                     .build();
         }
 

@@ -3,4 +3,21 @@ type Transactions{
     amount:Float
     user:Users
     order:Orders
+    status:StatusTransaction
+    confirmed:Boolean
+    createdAt:String
+    transactionNo:String
+}
+type PageTransactions {
+    content:[Transactions]
+    totalPages:Int
+    totalElements:Int
+    numberOfElements: Int
+}
+
+enum StatusTransaction {
+    WITHDRAWAL,
+    DIPOSIT,
+    BUYING,
+    PAYBACK
 }

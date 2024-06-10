@@ -5,21 +5,26 @@ type Users {
     email: String
     password: String
     picture: String
-    CIN: String
-    phoneNumber: String
     role: Role
     createdAt: String
     modifiedAt: String
     deletedAt: String
     deletedBy: String
     authorities:[Authorities]
+
 }
+input AddUser {
+    firstName: String!
+    lastName: String!
+    email:String!
+}
+
 
 type Authorities {
     authority:String
 }
 
-type Page {
+type PageUsers {
     content:[Users]
     totalPages:Int
     totalElements:Int

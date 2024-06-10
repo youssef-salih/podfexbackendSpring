@@ -28,6 +28,11 @@ public class OrdersControllers {
         Pageable pageable = PageRequest.of(page - 1, size);
         return orderCrud.getOrdersList(pageable);
     }
+    @QueryMapping
+    public Page<OrdersDto> getUsersOrdersList(@Argument(name = "page") int page, @Argument(name = "size") int size) {
+        Pageable pageable = PageRequest.of(page - 1, size);
+        return orderCrud.getUsersOrdersList(pageable);
+    }
 
     @QueryMapping
     public OneResponse<OrdersDto> getOneOrder(@Argument(name = "orderNo") String orderNo) {
@@ -35,8 +40,8 @@ public class OrdersControllers {
     }
 
     @QueryMapping
-    public ListResponse<OrdersDto> getOrdersByType(@Argument(name = "type") String type) {
-        List<OrdersDto> orders = orderCrud.getOrdersByType(type);
+    public ListResponse<OrdersDto> getOrdersByType(@Argument(name = "type") String type, @Argument Long productId) {
+        List<OrdersDto> orders = orderCrud.getOrdersByType(type,productId);
         return ListResponse.<OrdersDto>builder()
                 .success(true)
                 .list(orders)

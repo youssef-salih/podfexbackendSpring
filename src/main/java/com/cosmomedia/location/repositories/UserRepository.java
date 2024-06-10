@@ -2,6 +2,7 @@ package com.cosmomedia.location.repositories;
 
 import com.cosmomedia.location.entities.Users;
 
+import com.cosmomedia.location.enums.Roles;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
@@ -20,4 +21,6 @@ public interface UserRepository extends JpaRepository<Users, Long> {
 
     @Override
     Optional<Users> findById(Long aLong);
+
+    Page<Users> findByRole(Roles role, Pageable pageable);
 }

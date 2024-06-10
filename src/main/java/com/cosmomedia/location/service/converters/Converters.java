@@ -8,9 +8,11 @@ import com.cosmomedia.location.entities.Orders;
 import com.cosmomedia.location.entities.Product;
 import com.cosmomedia.location.entities.Surface;
 import com.cosmomedia.location.entities.Users;
+import com.cosmomedia.location.enums.Sizes;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Base64;
 import java.util.List;
 
@@ -157,12 +159,21 @@ public class Converters {
             String previewString = Base64.getEncoder().encodeToString(product.getImage());
             productDto.setImage(previewString);
         }
+
         // Convert Surface to SurfaceDto
         if (product.getSurface() != null) {
             SurfaceDto surfaceDto = convertToSurfaceDto(product.getSurface());
             productDto.setSurface(surfaceDto);
         }
+        if (product.getSizes() != null) {
+            List<String> sizes = new ArrayList<>();
+            for (Sizes size : product.getSizes()) {
+                sizes.add(size.name());
+            }
+            productDto.setSizes(sizes);
+        }
 
+        productDto.setActive(product.getActive());
         return productDto;
     }
 

@@ -15,6 +15,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 @Service
 public class JwtService {
@@ -28,9 +29,18 @@ public class JwtService {
         return claimsResolver.apply(claims);
     }
 
-    public String generateToken(UserDetails userDetails){
-        return generateToken(new HashMap<>(), userDetails);
+    public String generateToken(UserDetails userDetails) {
+        Map<String, Object> extraClaims = new HashMap<>();
+        // Include single role in extra claims as a string
+        String role = userDetails.getAuthorities().stream()
+                .map(e -> e.getAuthority())
+                .findFirst()
+                .orElse(null);
+        extraClaims.put("role", role);
+
+        return generateToken(extraClaims, userDetails);
     }
+
     public String generateToken(Map<String, Object> extraClaims, UserDetails userDetails){
         long expirationMillis;
         if (userDetails.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("CUSTOMER"))) {
@@ -43,7 +53,8 @@ public class JwtService {
         return Jwts
                 .builder()
                 .setClaims(extraClaims)
-                .setSubject(userDetails.getUsername()).setIssuedAt(new Date(System.currentTimeMillis()))
+                .setSubject(userDetails.getUsername())
+                .setIssuedAt(new Date(System.currentTimeMillis()))
                 .setExpiration(new Date(System.currentTimeMillis()+1000*60*60*24))
                 .signWith(getSignInKey(), SignatureAlgorithm.HS256).compact();
     }

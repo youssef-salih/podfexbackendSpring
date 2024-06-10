@@ -3,3 +3,8 @@ type Surface{
     front:String
     back:String
 }
+
+input SurfaceInput{
+    front:String
+    back:String
+}

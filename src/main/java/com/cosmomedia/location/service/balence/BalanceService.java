@@ -2,11 +2,12 @@ package com.cosmomedia.location.service.balence;
 
 import com.cosmomedia.location.dto.OneResponse;
 import com.cosmomedia.location.entities.Balance;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
+import com.cosmomedia.location.entities.Message;
 
-import java.util.Optional;
+public interface BalanceService {
 
-public interface BalanceCRUD {
+    Balance balanceUser();
 
+
+    Message  addBalance(Double amount);
 }

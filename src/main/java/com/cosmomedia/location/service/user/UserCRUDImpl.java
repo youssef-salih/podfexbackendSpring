@@ -1,9 +1,11 @@
 package com.cosmomedia.location.service.user;
 
 import com.cosmomedia.location.dto.UsersDto;
+import com.cosmomedia.location.entities.Balance;
 import com.cosmomedia.location.entities.Message;
 import com.cosmomedia.location.entities.Users;
 import com.cosmomedia.location.enums.Roles;
+import com.cosmomedia.location.repositories.BalanceRepository;
 import com.cosmomedia.location.repositories.UserRepository;
 import com.cosmomedia.location.service.specifications.UserSpecifications;
 import jakarta.mail.MessagingException;
@@ -28,14 +30,17 @@ import java.text.SimpleDateFormat;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.Optional;
+import java.util.Random;
 
 @Service
 @Transactional
 @RequiredArgsConstructor
-public class UserCRUDImpl implements UserCRUD{
+public class UserCRUDImpl implements UserCRUD {
 
     private final JavaMailSender javaMailSender;
     private final UserRepository userRepository;
+    private final BalanceRepository balanceRepository;
+
     private final PasswordEncoder passwordEncoder;
 
 
@@ -52,11 +57,19 @@ public class UserCRUDImpl implements UserCRUD{
 
         return byteArray;
     }
+
     @Override
     public UsersDto getOneUser(String email) {
         Optional<Users> usersOptional = userRepository.findByEmail(email);
         return convertToUsersDto(usersOptional.get());
     }
+
+    @Override
+    public UsersDto getOneUserByID(Long id) {
+        Optional<Users> usersOptional = userRepository.findById(id);
+        return convertToUsersDto(usersOptional.get());
+    }
+
 
     @Override
     public Page<UsersDto> getUsersList(Pageable pageable) {
@@ -101,47 +114,64 @@ public class UserCRUDImpl implements UserCRUD{
 
         return usersDto;
     }
-    private void saveUserAndSendWelcomeEmail(Users user) throws MessagingException, IOException {
+
+    @Transactional
+    protected void saveUserAndSendWelcomeEmail(Users user) throws MessagingException, IOException {
+        // Generate an 8-figure random password
+        String randomPassword = generateRandomPassword(8);
+
         // Save user information to the database
         Users savedUser = Users.builder()
                 .firstName(user.getFirstName())
                 .lastName(user.getLastName())
                 .email(user.getEmail())
-                .role(user.getRole())
+                .role(Roles.PERSONNEL)
                 .createdAt(new Date())
                 .modifiedAt(new Date())
-//                .picture(convertStringToBytes(Arrays.toString(user.getPicture())))
+                .password(passwordEncoder.encode(randomPassword))
                 .build();
         userRepository.save(savedUser);
 
-        // Send welcome email
-//        sendWelcomeEmail(savedUser);
+        // Send welcome email with the random password
+        sendWelcomeEmail(savedUser, randomPassword);
     }
-    private void sendWelcomeEmail(Users user) throws MessagingException, IOException {
+
+    private String generateRandomPassword(int length) {
+        String characterSet = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+        Random random = new Random();
+        StringBuilder password = new StringBuilder(length);
+        for (int i = 0; i < length; i++) {
+            int index = random.nextInt(characterSet.length());
+            password.append(characterSet.charAt(index));
+        }
+        return password.toString();
+    }
+
+    private void sendWelcomeEmail(Users user, String password) throws MessagingException, IOException {
         MimeMessage mimeMessage = javaMailSender.createMimeMessage();
         MimeMessageHelper messageHelper = new MimeMessageHelper(mimeMessage, true, "UTF-8");
 
         // Set email details
-        messageHelper.setFrom("anasfananibusiness@gmail.com");
+        messageHelper.setFrom("d.youssefsalih@gmail.com");
         messageHelper.setTo(user.getEmail());
-        messageHelper.setSubject("Welcome To CosmoMedia");
+        messageHelper.setSubject("Welcome To Podfex");
         // Load email content from the HTML file in the resources/static directory
         ClassPathResource resource = new ClassPathResource("static/email.html");
         InputStream inputStream = resource.getInputStream();
         byte[] emailContentBytes = StreamUtils.copyToByteArray(inputStream);
         String emailContent = new String(emailContentBytes, StandardCharsets.UTF_8);
 
+        // Replace placeholders in the email content
         if (user.getFirstName() != null) {
             emailContent = emailContent.replace("[NAME]", user.getFirstName());
         }
-        // Replace the [NAME] placeholder with the user's last name if not null
         if (user.getLastName() != null) {
             emailContent = emailContent.replace("[NAME]", user.getLastName());
         }
-        // Format the current date and replace the [time here] placeholder
         SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
         String formattedDate = dateFormat.format(new Date());
         emailContent = emailContent.replace("[time here]", formattedDate);
+        emailContent = emailContent.replace("[PASSWORD]", password); // Add the password to the email
 
         // Set the HTML content
         messageHelper.setText(emailContent, true);
@@ -162,9 +192,9 @@ public class UserCRUDImpl implements UserCRUD{
     }
 
     @Override
-    public Message updateUser(Users updatedUser) {
+    public Message updateUser(Users updatedUser, String email) {
         try {
-            Optional<Users> existingUserOptional = userRepository.findByEmail(updatedUser.getEmail());
+            Optional<Users> existingUserOptional = userRepository.findByEmail(email);
             if (existingUserOptional.isPresent()) {
                 Users existingUser = existingUserOptional.get();
                 handleUpdatePermissions(existingUser, updatedUser);
@@ -192,11 +222,12 @@ public class UserCRUDImpl implements UserCRUD{
                 existingUser.setLastName(updatedUser.getLastName());
                 existingUser.setEmail(updatedUser.getEmail());
 //              existingUser.setPicture(convertStringToBytes(Arrays.toString(updatedUser.getPicture())));
-                existingUser.setRole(updatedUser.getRole());
+//              existingUser.setRole(updatedUser.getRole());
             }
             existingUser.setModifiedAt(new Date()); // Update modifiedAt timestamp
         }
     }
+
     private void handleRestorePermissions(Users existingUser) {
         Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         if (principal instanceof Users currentUser) {
@@ -206,6 +237,7 @@ public class UserCRUDImpl implements UserCRUD{
             }
         }
     }
+
     @Override
     public Message softDeleteUser(String email) {
         try {
@@ -214,6 +246,21 @@ public class UserCRUDImpl implements UserCRUD{
                 Users existingUser = existingUserOptional.get();
                 Users deletedUser = handleSoftDeletePermissions(existingUser);
                 userRepository.save(deletedUser);
+                return new Message(true, "User deleted successfully");
+            } else {
+                return new Message(false, "User not found");
+            }
+        } catch (Exception e) {
+            return new Message(false, "Error in deleting the user: " + e.getMessage());
+        }
+    }
+
+    @Override
+    public Message hardDeleteUser(String email) {
+        try {
+            Optional<Users> existingUserOptional = userRepository.findByEmail(email);
+            if (existingUserOptional.isPresent()) {
+                userRepository.delete(existingUserOptional.get());
                 return new Message(true, "User deleted successfully");
             } else {
                 return new Message(false, "User not found");
@@ -234,10 +281,17 @@ public class UserCRUDImpl implements UserCRUD{
         }
         return existingUser;
     }
+
     @Override
     public Page<UsersDto> getDeletedUsersList(Pageable pageable) {
         Page<Users> usersPage = userRepository.findByDeletedAtNotNullOrderByDeletedAtDesc(pageable);
         return usersPage.map(this::convertToUsersDto);
+    }
+
+    @Override
+    public Page<UsersDto> getPersonnel(Pageable pageable) {
+        Page<Users> personnelPage = userRepository.findByRole(Roles.PERSONNEL, pageable);
+        return personnelPage.map(this::convertToUsersDto);
     }
 
     @Override
@@ -256,8 +310,9 @@ public class UserCRUDImpl implements UserCRUD{
             return new Message(false, "Error in restoring the user: " + e.getMessage());
         }
     }
+
     @Override
-    public Page<Users> filterUsers(String firstName, String lastName,String email,
+    public Page<Users> filterUsers(String firstName, String lastName, String email,
                                    String role, String deletedBy, Pageable pageable) {
         Specification<Users> specification = Specification.where(UserSpecifications.filterByFirstName(firstName))
                 .and(UserSpecifications.filterByLastName(lastName))

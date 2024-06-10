@@ -1,6 +1,5 @@
 type Balance{
     id:ID
     amount:Float
-    user:Users
 }
 

@@ -4,6 +4,8 @@ type Product{
     image:String
     price:Float
     surface:Surface
+    active:Boolean
+    sizes:[Sizes]
 }
 
 type PageProduct {
@@ -12,3 +14,13 @@ type PageProduct {
     totalElements:Int
     numberOfElements: Int
 }
+
+input ProductInput{
+    name:String
+    image:String
+    price:Float
+    surface:SurfaceInput
+    active:Boolean
+    sizes:[Sizes]
+}
+

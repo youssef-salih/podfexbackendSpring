@@ -1,6 +1,7 @@
 package com.cosmomedia.location.entities;
 
 
+import com.cosmomedia.location.enums.Sizes;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
@@ -22,10 +23,17 @@ public class Product {
     private String name;
     private Double price;
     private byte[] image;
+
     @OneToOne(cascade = CascadeType.ALL)
     @JoinColumn(name = "surface_id", referencedColumnName = "id")
     private Surface surface;
 
+    @ElementCollection(fetch = FetchType.EAGER, targetClass = Sizes.class)
+    @CollectionTable(name = "product_sizes", joinColumns = @JoinColumn(name = "product_id"))
+    @Enumerated(EnumType.STRING)
+    private List<Sizes> sizes;
+
+    private Boolean active;
     public Product(Long productId) {
         this.id=productId;
     }

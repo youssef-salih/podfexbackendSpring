@@ -12,7 +12,7 @@ import java.util.Date;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-@ToString(exclude = "users")
+@ToString
 @Entity
 public class Balance {
     @Id

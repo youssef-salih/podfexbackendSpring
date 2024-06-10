@@ -27,7 +27,17 @@ public class UserControllers {
     public UsersDto getOneUser(@Argument(name = "email") String email) {
         return userCRUD.getOneUser(email);
     }
+    @QueryMapping
+    public UsersDto getOneUserByIdid(@Argument(name = "id") Long id) {
+        return userCRUD.getOneUserByID(id);
+    }
 
+
+    @QueryMapping
+    public Page<UsersDto> getPersonnel(@Argument(name = "page") int page, @Argument(name = "size") int size) {
+        Pageable pageable = PageRequest.of(page - 1, size);
+        return userCRUD.getPersonnel(pageable);
+    }
 
     @QueryMapping
     public Page<UsersDto> allUsers(@Argument(name = "page") int page, @Argument(name = "size") int size) {
@@ -41,13 +51,13 @@ public class UserControllers {
     }
 
     @MutationMapping
-    public Message updateUser(@Argument(name = "user") Users users) {
-        return userCRUD.updateUser(users);
+    public Message updateUser(@Argument(name = "user") Users users,@Argument(name = "email") String email) {
+        return userCRUD.updateUser(users,email);
     }
 
     @MutationMapping
     public Message deleteUser(@Argument(name = "email") String email) {
-        return userCRUD.softDeleteUser(email);
+        return userCRUD.hardDeleteUser(email);
     }
 
     @MutationMapping
@@ -63,8 +73,7 @@ public class UserControllers {
             @Argument String role,
             @Argument String deletedBy,
             @Argument(name = "page") int page,
-            @Argument(name = "size") int size)
-    {
+            @Argument(name = "size") int size) {
         Pageable pageable = PageRequest.of(page - 1, size);
         return userCRUD.filterUsers(firstName, lastName, email, role, deletedBy, pageable);
     }

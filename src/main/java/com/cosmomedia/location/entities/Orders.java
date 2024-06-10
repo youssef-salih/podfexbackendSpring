@@ -27,6 +27,7 @@ public class Orders {
     private StatusAdmin statusAdmin;
     private Integer quantity;
     private String type;
+    //to be displayed to admins (ready for printing)
     private Boolean confirmed;
     @ManyToOne
     private Users personnel;
@@ -48,5 +49,6 @@ public class Orders {
     @Column(name = "file_data", columnDefinition = "bytea")
     private List<byte[]> images;
 
-
+    @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<OrderItem> orderItems;
 }

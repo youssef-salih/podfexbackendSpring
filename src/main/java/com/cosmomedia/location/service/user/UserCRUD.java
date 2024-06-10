@@ -19,6 +19,13 @@ public interface UserCRUD {
      * @return The user with the specified email.
      */
     UsersDto getOneUser(String email);
+    /**
+     * Retrieves a single user by Customer Identification Number (CIN).
+     *
+     * @param id Customer Identification Number.
+     * @return The user with the specified email.
+     */
+    UsersDto getOneUserByID(Long id);
 
     /**
      * Retrieves a paginated list of users.
@@ -45,15 +52,22 @@ public interface UserCRUD {
      */
     Message softDeleteUser(String email);
 
+    /**.
+     *
+     * @param email Customer Identification Number of the user to be soft-deleted.
+     * @return A message indicating the success or failure of the operation.
+     */
+    Message hardDeleteUser(String email);
     /**
      * Updates an existing user.
      *
      * @param user The user entity with updated information.
      * @return A message indicating the success or failure of the operation.
      */
-    Message updateUser(Users user);
+    Message updateUser(Users user,String email);
 
     Page<UsersDto> getDeletedUsersList(Pageable pageable);
+    Page<UsersDto> getPersonnel(Pageable pageable);
 
     Message restoreDeletedUser(String email);
 
