@@ -11,17 +11,21 @@ import org.springframework.stereotype.Controller;
 
 @Controller
 @RequiredArgsConstructor
-public class BalanceControllers
-{
+public class BalanceControllers {
     private final BalanceService balanceCrud;
 
     @QueryMapping
-    public Balance balanceUser(){
+    public Balance balanceUser() {
         return balanceCrud.balanceUser();
     }
 
     @MutationMapping
-    public Message addBalance(@Argument(name = "amount")Double amount){
-        return  balanceCrud.addBalance(amount);
+    public Message addBalance(@Argument(name = "amount") Double amount) {
+        return balanceCrud.addBalance(amount);
+    }
+
+    @MutationMapping
+    public Message confirmBalance(@Argument(name = "no") String No) {
+        return balanceCrud.confirmBalance(No);
     }
 }

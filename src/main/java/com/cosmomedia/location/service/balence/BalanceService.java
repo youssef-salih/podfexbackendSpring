@@ -10,4 +10,6 @@ public interface BalanceService {
 
 
     Message  addBalance(Double amount);
+
+    Message confirmBalance(String No);
 }

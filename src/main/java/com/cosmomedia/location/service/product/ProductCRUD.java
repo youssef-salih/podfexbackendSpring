@@ -16,6 +16,8 @@ public interface ProductCRUD {
 
     OneResponse<ProductDto> getOneProduct(String name);
 
+
+
     Message addProduct(Product product);
 
     Message deleteProduct(Long id);

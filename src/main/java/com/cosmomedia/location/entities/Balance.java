@@ -22,6 +22,7 @@ public class Balance {
     @OneToOne
     @JoinColumn(name = "user_id")
     private Users users;
+
 //    @PrePersist
 //    @PreUpdate
 //    private void validateUserRole() {

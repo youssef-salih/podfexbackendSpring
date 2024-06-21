@@ -1,6 +1,7 @@
 package com.cosmomedia.location.entities;
 
 
+import com.cosmomedia.location.enums.Colors;
 import com.cosmomedia.location.enums.Sizes;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
@@ -32,9 +33,14 @@ public class Product {
     @CollectionTable(name = "product_sizes", joinColumns = @JoinColumn(name = "product_id"))
     @Enumerated(EnumType.STRING)
     private List<Sizes> sizes;
+    @ElementCollection(fetch = FetchType.EAGER, targetClass = Colors.class)
+    @CollectionTable(name = "product_colors", joinColumns = @JoinColumn(name = "product_id"))
+    @Enumerated(EnumType.STRING)
+    private List<Colors> colors;
 
     private Boolean active;
+
     public Product(Long productId) {
-        this.id=productId;
+        this.id = productId;
     }
 }

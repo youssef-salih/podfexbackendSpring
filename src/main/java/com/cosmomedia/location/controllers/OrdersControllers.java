@@ -1,9 +1,8 @@
 package com.cosmomedia.location.controllers;
 
-import com.cosmomedia.location.dto.ListResponse;
-import com.cosmomedia.location.dto.OneResponse;
-import com.cosmomedia.location.dto.OrdersDto;
+import com.cosmomedia.location.dto.*;
 import com.cosmomedia.location.entities.*;
+import com.cosmomedia.location.enums.Sizes;
 import com.cosmomedia.location.enums.StatusAdmin;
 import com.cosmomedia.location.enums.StatusUser;
 import com.cosmomedia.location.service.order.OrderCrud;
@@ -17,6 +16,8 @@ import org.springframework.graphql.data.method.annotation.QueryMapping;
 import org.springframework.stereotype.Controller;
 
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Controller
 @RequiredArgsConstructor
@@ -32,6 +33,16 @@ public class OrdersControllers {
     public Page<OrdersDto> getUsersOrdersList(@Argument(name = "page") int page, @Argument(name = "size") int size) {
         Pageable pageable = PageRequest.of(page - 1, size);
         return orderCrud.getUsersOrdersList(pageable);
+    }
+    @QueryMapping
+    public Page<OrdersDto> getAssignedOrdersList(@Argument(name = "page") int page, @Argument(name = "size") int size) {
+        Pageable pageable = PageRequest.of(page - 1, size);
+        return orderCrud.getAssignedOrdersList(pageable);
+    }
+    @QueryMapping
+    public Page<OrdersDto> getConfirmedOrdersList(@Argument(name = "page") int page, @Argument(name = "size") int size) {
+        Pageable pageable = PageRequest.of(page - 1, size);
+        return orderCrud.getConfirmedOrdersList(pageable);
     }
 
     @QueryMapping
@@ -107,8 +118,20 @@ public class OrdersControllers {
     public Message confirmOrder(
             @Argument(name = "orderNo") String orderNo,
             @Argument(name = "quantity") Integer quantity,
-            @Argument(name = "client") Client client
+            @Argument(name = "client") Client client,
+            @Argument(name = "orderItems") List<OrderItemDto> orderItems
     ) {
-        return orderCrud.confirmOrder(orderNo, quantity, client);
+        return orderCrud.confirmOrder(orderNo, quantity, client,orderItems);
+    }
+
+
+    @QueryMapping
+    public int getCurrentUserOrdersCount() {
+        return  orderCrud.getCurrentUserOrdersCount();
+    }
+    
+    @QueryMapping
+    public int getCurrentUserOrdersByStatus(@Argument(name = "userStatus") StatusUser userStatus){
+        return orderCrud.getCurrentUserOrdersByStatus(userStatus);
     }
 }

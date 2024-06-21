@@ -1,6 +1,7 @@
 package com.cosmomedia.location.service.order;
 
 import com.cosmomedia.location.dto.OneResponse;
+import com.cosmomedia.location.dto.OrderItemDto;
 import com.cosmomedia.location.dto.OrdersDto;
 import com.cosmomedia.location.entities.*;
 import com.cosmomedia.location.enums.StatusAdmin;
@@ -32,7 +33,6 @@ public class OrderCrudImpl implements OrderCrud {
     private final BalanceService balanceService;
     private final BalanceRepository balanceRepository;
     private final TransactionsRepository transactionsRepository;
-
     @Override
     public Page<OrdersDto> getOrdersList(Pageable pageable) {
         Set<Long> seen = new HashSet<>();
@@ -71,7 +71,6 @@ public class OrderCrudImpl implements OrderCrud {
                 ordersPage.getTotalElements()
         );
     }
-
     @Override
     public Page<OrdersDto> getUsersOrdersList(Pageable pageable) {
         String userEmail = AuthenticationUtils.getUserEmailFromAuthentication();
@@ -120,6 +119,154 @@ public class OrderCrudImpl implements OrderCrud {
         );
     }
 
+    @Override
+    public Page<OrdersDto> getConfirmedOrdersList(Pageable pageable) {
+        Set<Long> seen = new HashSet<>();
+        List<Orders> validOrders = new ArrayList<>();
+
+        Page<Orders> ordersPage;
+        int page = 0;
+
+        do {
+            ordersPage = ordersRepository.findByConfirmedTrue(pageable);
+            for (Orders order : ordersPage.getContent()) {
+                if (order.getOrder() == null) {
+                    validOrders.add(order);
+                    continue;
+                }
+
+                Long currentId = order.getId();
+                Long referredId = order.getOrder().getId();
+
+                if (seen.contains(referredId)) {
+                    continue; // Skip this order if the referred one is already seen
+                }
+
+                seen.add(currentId);
+                seen.add(referredId);
+                validOrders.add(order);
+            }
+            page++;
+        } while (ordersPage.hasNext() && page < pageable.getPageNumber());
+
+        return new PageImpl<>(
+                validOrders.stream()
+                        .map(converters::convertToOrdersDto)
+                        .toList(),
+                pageable,
+                ordersPage.getTotalElements()
+        );
+    }
+    @Override
+    public Page<OrdersDto> getAssignedOrdersList(Pageable pageable) {
+        String userEmail = AuthenticationUtils.getUserEmailFromAuthentication();
+        Optional<Users> userOptional = usersRepository.findByEmail(userEmail);
+        System.out.println(userOptional);
+        if (!userOptional.isPresent()) {
+            return Page.empty(pageable);
+        }
+
+        Users currentUser = userOptional.get();
+
+        Set<Long> seen = new HashSet<>();
+        List<Orders> validOrders = new ArrayList<>();
+
+        Page<Orders> ordersPage;
+        int page = 0;
+
+        do {
+            ordersPage = ordersRepository.findByPersonnel(currentUser, pageable);
+            for (Orders order : ordersPage.getContent()) {
+                if (order.getOrder() == null) {
+                    validOrders.add(order);
+                    continue;
+                }
+
+                Long currentId = order.getId();
+                Long referredId = order.getOrder().getId();
+
+                if (seen.contains(referredId)) {
+                    continue; // Skip this order if the referred one is already seen
+                }
+
+                seen.add(currentId);
+                seen.add(referredId);
+                validOrders.add(order);
+            }
+            page++;
+        } while (ordersPage.hasNext() && page < pageable.getPageNumber());
+
+        return new PageImpl<>(
+                validOrders.stream()
+                        .map(converters::convertToOrdersDto)
+                        .toList(),
+                pageable,
+                ordersPage.getTotalElements()
+        );
+    }
+
+
+
+    @Override
+    public int getCurrentUserOrdersCount() {
+        String userEmail = AuthenticationUtils.getUserEmailFromAuthentication();
+
+        Set<Long> seen = new HashSet<>();
+        List<Orders> validOrders = new ArrayList<>();
+
+        List<Orders> ordersPage;
+        int page = 0;
+        ordersPage = ordersRepository.findBySeller_Email(userEmail);
+        for (Orders order : ordersPage) {
+            if (order.getOrder() == null) {
+                validOrders.add(order);
+                continue;
+            }
+
+            Long currentId = order.getId();
+            Long referredId = order.getOrder().getId();
+
+            if (seen.contains(referredId)) {
+                continue; // Skip this order if the referred one is already seen
+            }
+
+            seen.add(currentId);
+            seen.add(referredId);
+            validOrders.add(order);
+        }
+
+        return validOrders.size();
+    }
+    @Override
+    public int getCurrentUserOrdersByStatus(StatusUser statusUser) {
+        String userEmail = AuthenticationUtils.getUserEmailFromAuthentication();
+
+        Set<Long> seen = new HashSet<>();
+        List<Orders> validOrders = new ArrayList<>();
+
+        List<Orders> ordersPage;
+        int page = 0;
+        ordersPage = ordersRepository.findBySeller_EmailAndStatusUser(userEmail,statusUser);
+        for (Orders order : ordersPage) {
+            if (order.getOrder() == null) {
+                validOrders.add(order);
+                continue;
+            }
+
+            Long currentId = order.getId();
+            Long referredId = order.getOrder().getId();
+
+            if (seen.contains(referredId)) {
+                continue; // Skip this order if the referred one is already seen
+            }
+
+            seen.add(currentId);
+            seen.add(referredId);
+            validOrders.add(order);
+        }
+
+        return validOrders.size();
+    }
     private String getUserEmailFromAuthentication() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication != null && authentication.getPrincipal() instanceof Users currentUser) {
@@ -128,7 +275,6 @@ public class OrderCrudImpl implements OrderCrud {
         }
         return null;
     }
-
     @Override
     public OneResponse<OrdersDto> getOneOrder(String orderNo) {
         Optional<Orders> orderOptional = ordersRepository.findByOrderNo(orderNo);
@@ -148,7 +294,6 @@ public class OrderCrudImpl implements OrderCrud {
                     .build();
         }
     }
-
     @Override
     public List<OrdersDto> getOrdersByType(String type, Long productId) {
         List<Orders> orders = ordersRepository.findByOrderNullAndConfirmedFalseAndTypeNotLikeAndProduct_Id(type, productId);
@@ -156,7 +301,6 @@ public class OrderCrudImpl implements OrderCrud {
                 .map(converters::convertToOrdersDto)
                 .collect(Collectors.toList());
     }
-
     @Override
     public Message addOrder(Orders order) {
         String orderNumber = UniqueIdentifierUtil.generateUniqueIdentifier("ORDER-");
@@ -204,7 +348,6 @@ public class OrderCrudImpl implements OrderCrud {
                 .message("Order added successfully")
                 .build();
     }
-
     public Message updateOrderPersonnel(String orderNo, Long personnelId) {
         Optional<Orders> orderOptional = ordersRepository.findByOrderNo(orderNo);
         Optional<Users> personnelOptional = usersRepository.findById(personnelId);
@@ -225,7 +368,6 @@ public class OrderCrudImpl implements OrderCrud {
                     .build();
         }
     }
-
     @Override
     public Message linkOrders(String orderId, String orderId2) {
         Optional<Orders> order1 = ordersRepository.findByOrderNo(orderId);
@@ -258,8 +400,6 @@ public class OrderCrudImpl implements OrderCrud {
                 .message("Order wrong Linked")
                 .build();
     }
-
-
     @Override
     public Message unlinkOrders(String orderNo, String orderNo2) {
         Optional<Orders> order1 = ordersRepository.findByOrderNo(orderNo);
@@ -289,23 +429,34 @@ public class OrderCrudImpl implements OrderCrud {
     }
 
     @Override
-    public Message confirmOrder(String orderNo, Integer quantity, Client client) {
+    public Message confirmOrder(String orderNo, Integer quantity, Client client, List<OrderItemDto> orderItems) {
         Optional<Orders> orderOptional = ordersRepository.findByOrderNo(orderNo);
         String transactionNumber = UniqueIdentifierUtil.generateUniqueIdentifier("Tran-");
+
         if (orderOptional.isPresent()) {
             Orders orderToConfirm = orderOptional.get();
             Balance balance = balanceService.balanceUser();
             Double newPrice = orderToConfirm.getPrice() * quantity;
+
             if (balance.getAmount() >= newPrice) {
-                // Ensure the client is saved
                 if (client.getId() == null) {
                     client = clientRepository.save(client);
                 }
+
                 orderToConfirm.setClient(client);
                 orderToConfirm.setQuantity(quantity);
                 orderToConfirm.setPrice(newPrice);
                 orderToConfirm.setConfirmed(true);
-
+                List<OrderItem> orderItemList = orderItems.stream()
+                        .map(orderItemDto -> {
+                            OrderItem orderItem = new OrderItem();
+                            orderItem.setSize(orderItemDto.getSize());
+                            orderItem.setQuantity(orderItemDto.getQuantity());
+                            orderItem.setOrder(orderToConfirm); // Set the order for each item
+                            return orderItem;
+                        })
+                        .toList();
+                orderToConfirm.setOrderItems(orderItemList);
                 ordersRepository.save(orderToConfirm);
 
                 balance.setAmount(balance.getAmount() - newPrice);
@@ -323,13 +474,13 @@ public class OrderCrudImpl implements OrderCrud {
                         .build();
                 transactionsRepository.save(transactions);
 
-                // Check if there's an associated order and update its client and price
                 if (orderToConfirm.getOrder() != null) {
                     Orders associatedOrder = orderToConfirm.getOrder();
                     associatedOrder.setClient(client);
                     associatedOrder.setQuantity(quantity);
                     associatedOrder.setPrice(newPrice);
                     associatedOrder.setConfirmed(true);
+
                     ordersRepository.save(associatedOrder);
                 }
 
@@ -338,17 +489,17 @@ public class OrderCrudImpl implements OrderCrud {
                         .message("Order Confirmed")
                         .build();
             }
+
             return Message.builder()
                     .success(false)
-                    .message("Balance Insufisant")
+                    .message("Balance Insufficient")
                     .build();
         }
 
         return Message.builder()
                 .success(false)
-                .message("Order not Confirmed please try again")
+                .message("Order not Confirmed, please try again")
                 .build();
     }
-
 
 }

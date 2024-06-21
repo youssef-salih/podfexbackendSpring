@@ -1,13 +1,7 @@
 package com.cosmomedia.location.service.converters;
 
-import com.cosmomedia.location.dto.OrdersDto;
-import com.cosmomedia.location.dto.ProductDto;
-import com.cosmomedia.location.dto.SurfaceDto;
-import com.cosmomedia.location.dto.UsersDto;
-import com.cosmomedia.location.entities.Orders;
-import com.cosmomedia.location.entities.Product;
-import com.cosmomedia.location.entities.Surface;
-import com.cosmomedia.location.entities.Users;
+import com.cosmomedia.location.dto.*;
+import com.cosmomedia.location.entities.*;
 import com.cosmomedia.location.enums.Sizes;
 import org.springframework.stereotype.Component;
 
@@ -229,5 +223,15 @@ public class Converters {
             surface.setFront(frontImageBytes);
         }
         return surface;
+    }
+    public OrderItem convertToOrderItem(OrderItemDto dto) {
+        if (dto == null) {
+            return null;
+        }
+        OrderItem orderItem = new OrderItem();
+        orderItem.setSize(dto.getSize());
+        orderItem.setQuantity(dto.getQuantity());
+
+        return orderItem;
     }
 }
