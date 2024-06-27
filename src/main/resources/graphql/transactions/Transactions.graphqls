@@ -7,6 +7,8 @@ type Transactions{
     confirmed:Boolean
     createdAt:String
     transactionNo:String
+    transactionState:TransactionState
+
 }
 type PageTransactions {
     content:[Transactions]
@@ -20,4 +22,9 @@ enum StatusTransaction {
     DIPOSIT,
     BUYING,
     PAYBACK
+}
+enum TransactionState {
+    PENDING,
+    CONFIRMED,
+    CANCELED
 }

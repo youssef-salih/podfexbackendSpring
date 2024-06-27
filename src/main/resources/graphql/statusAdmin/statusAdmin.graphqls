@@ -1,4 +1,5 @@
 enum  StatusAdmin {
     VERIFIED,
-    UNVERIFIED
+    UNVERIFIED,
+    CANCELED
 }

@@ -6,6 +6,7 @@ type Product{
     surface:Surface
     active:Boolean
     sizes:[Sizes]
+    colors:[Colors]
 }
 
 type PageProduct {
@@ -22,5 +23,6 @@ input ProductInput{
     surface:SurfaceInput
     active:Boolean
     sizes:[Sizes]
+    colors:[Colors]
 }
 

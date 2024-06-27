@@ -6,3 +6,7 @@ enum Sizes {
     XXL,
 }
 
+enum Colors{
+    WHITE
+    BLACK
+}

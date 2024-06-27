@@ -15,11 +15,16 @@ type Query{
     balanceUser:Balance
     allTransactions(page: Int = 1, size: Int = 10):PageTransactions
     getTransactionsForCurrentUser(page: Int = 1, size: Int = 10):PageTransactions
+    getTransactionsNotconfirmed(page: Int = 1, size: Int = 10):PageTransactions
     getPersonnel(page: Int = 1, size: Int = 10):PageUsers
     getOneUser(email:String):Users
     getOneUserByIdid(id:Int):Users
     getCurrentUserOrdersCount:Int
+    getConfirmedOrder:Int
+    getAssignedOrder:Int
     getCurrentUserOrdersByStatus(userStatus:StatusUser):Int
+    getAssignedOrdersByStatus(userStatus:StatusUser):Int
+    getConfirmedOrdersByStatus(userStatus:StatusUser):Int
 }
 
 
@@ -44,6 +49,10 @@ type Mutation {
     deleteProduct(id:ID):Message
     updateProduct(name:String, product:ProductInput):Message
     confirmBalance(no:String):Message
+    confirmTransaction(transactionNo:String):Message
+    cancelTransaction(transactionNo:String):Message
+    validateOrder(orderNo: String,status:StatusAdmin,personnel:ID):Message
+    changeOrderStatus(orderNo:String,status:StatusUser):Message
 }
 
 type Message {
@@ -55,7 +64,14 @@ type StatusUserCountDto {
     status: StatusUser
     count: Int
 }
+type OrderItems{
+    size:Sizes
+    quantity:Int
+    color:Colors
+}
+
 input OrderItemsInput {
     size:Sizes
     quantity:Int
+    color:Colors
 }

@@ -13,6 +13,7 @@ type Orders {
     images:[String]
     order:Orders
     confirmed:Boolean
+    orderItems:[OrderItems]
 }
 type PageOrders {
     content:[Orders]
