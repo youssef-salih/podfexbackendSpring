@@ -40,7 +40,7 @@ public class Orders {
     private Product product;
 
     @OneToOne(fetch = FetchType.EAGER)
-    private Orders order;
+    private Orders order; 
 
     @ManyToOne
     private Client client;

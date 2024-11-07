@@ -25,7 +25,7 @@ public class UsersSeeder implements CommandLineRunner {
     }
 
     public void seedData() {
-        createDefaultUser("youssefsalih2016@gmail.com", "machakil1", "youssef", "salih", Roles.ADMIN);
+        createDefaultUser("admin@pod.ma", "admin", "karim", "faloh", Roles.ADMIN);
     }
 
     private void createDefaultUser(String email, String password, String firstName, String lastName, Roles role) {

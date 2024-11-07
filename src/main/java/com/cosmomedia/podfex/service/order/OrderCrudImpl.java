@@ -13,16 +13,26 @@ import com.cosmomedia.podfex.service.balence.BalanceService;
 import com.cosmomedia.podfex.service.converters.Converters;
 import com.cosmomedia.podfex.util.AuthenticationUtils;
 import com.cosmomedia.podfex.util.UniqueIdentifierUtil;
+import jakarta.mail.MessagingException;
+import jakarta.mail.internet.MimeMessage;
 import lombok.RequiredArgsConstructor;
+import org.springframework.core.io.ClassPathResource;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
+import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StreamUtils;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
+import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -36,6 +46,7 @@ public class OrderCrudImpl implements OrderCrud {
     private final BalanceService balanceService;
     private final BalanceRepository balanceRepository;
     private final TransactionsRepository transactionsRepository;
+    private final JavaMailSender javaMailSender;
 
     @Override
     public Page<OrdersDto> getOrdersList(Pageable pageable) {
@@ -699,6 +710,18 @@ public class OrderCrudImpl implements OrderCrud {
                     }
                 }
 
+                // Handle order Verified
+                if (selectedOrder.getStatusAdmin() == StatusAdmin.VERIFIED) {
+                    Optional<Users> userOptional = usersRepository.findById(selectedOrder.getSeller().getId());
+                    if (userOptional.isPresent()) {
+                        Users user = userOptional.get();
+                        sendConfirmationEmail(user, selectedOrder);
+                    } else {
+                        return new Message(false, "Personnel not found");
+                    }
+
+                }
+
                 // Update personnel if provided
                 if (personnelId == null) {
                     selectedOrder.setPersonnel(null);
@@ -727,6 +750,7 @@ public class OrderCrudImpl implements OrderCrud {
         }
     }
 
+
     @Override
     public Message changeOrderStatus(String orderNo, StatusUser status) {
         try {
@@ -736,6 +760,11 @@ public class OrderCrudImpl implements OrderCrud {
                 Orders selectedOrder = orderOptional.get();
                 selectedOrder.setStatusUser(status);
                 ordersRepository.save(selectedOrder);
+                if (selectedOrder.getOrder() != null) {
+                    Orders associatedOrder = selectedOrder.getOrder();
+                    associatedOrder.setStatusUser(status);
+                    ordersRepository.save(associatedOrder);
+                }
                 return Message.builder()
                         .success(true)
                         .message("Order status changed successfully")
@@ -750,4 +779,39 @@ public class OrderCrudImpl implements OrderCrud {
         }
     }
 
+
+    private void sendConfirmationEmail(Users user, Orders order) throws MessagingException, IOException {
+
+
+        MimeMessage mimeMessage = javaMailSender.createMimeMessage();
+        MimeMessageHelper messageHelper = new MimeMessageHelper(mimeMessage, true, "UTF-8");
+
+        // Set email details
+        messageHelper.setFrom("d.youssefsalih@gmail.com");
+        messageHelper.setTo(user.getEmail());
+        messageHelper.setSubject("Order confirmed in Podfex");
+        // Load email content from the HTML file in the resources/static directory
+        ClassPathResource resource = new ClassPathResource("static/confirmation.html");
+        InputStream inputStream = resource.getInputStream();
+        byte[] emailContentBytes = StreamUtils.copyToByteArray(inputStream);
+        String emailContent = new String(emailContentBytes, StandardCharsets.UTF_8);
+
+        // Replace placeholders in the email content
+        if (user.getFirstName() != null) {
+            emailContent = emailContent.replace("[nomClient]", user.getFirstName());
+        }
+        if (order.getProduct() != null) {
+            emailContent = emailContent.replace("[nomProduit]", order.getProduct().getName());
+        }
+        if (order.getQuantity()!=null){
+            emailContent = emailContent.replace("[quantite]", order.getQuantity().toString());
+        }
+        if (order.getId() != null) {
+            emailContent = emailContent.replace("[idOrder]", order.getOrderNo());
+        }
+        // Set the HTML content
+        messageHelper.setText(emailContent, true);
+
+        javaMailSender.send(mimeMessage);
+    }
 }
